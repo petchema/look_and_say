@@ -1,4 +1,3 @@
 (executable
- (public_name werber)
- (name main)
- (libraries werber))
+ (public_name look_and_say)
+ (name main))

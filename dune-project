@@ -1,24 +1,24 @@
 (lang dune 3.11)
 
-(name werber)
+(name look_and_say)
 
 (generate_opam_files true)
 
 (source
  (github username/reponame))
 
-(authors "Author Name")
+(authors "Pierre Etchemaite")
 
-(maintainers "Maintainer Name")
+(maintainers "Pierre Etchemaite")
 
 (license LICENSE)
 
 (documentation https://url/to/documentation)
 
 (package
- (name werber)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (name look_and_say)
+ (synopsis "Compute Look And Say sequence")
+ (description "Output one item from Conway's Look And Say sequence https://oeis.org/A005150")
  (depends ocaml dune)
  (tags
   (topics "to describe" your project)))
