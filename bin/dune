@@ -1,0 +1,4 @@
+(executable
+ (public_name werber)
+ (name main)
+ (libraries werber))
