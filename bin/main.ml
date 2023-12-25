@@ -1,12 +1,13 @@
 (* Look and Say sequence https://oeis.org/A005150 *)
 
 let rec seq_of_int n cont =
-  if n >= 10 then
+  if n < 10 then
+    Seq.cons n cont
+  else
+    (* unused unless you use digits >= 4 in seed *)
     seq_of_int (n / 10) 
       (Seq.cons (n mod 10)
          cont)
-  else
-    Seq.cons n cont
   
 let rec look_and_say n =
   if n = 1 then Seq.return 1
