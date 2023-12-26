@@ -5,7 +5,7 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github petchema/look_and_say))
 
 (authors "Pierre Etchemaite")
 

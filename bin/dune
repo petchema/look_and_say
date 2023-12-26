@@ -1,3 +1,4 @@
 (executable
  (public_name look_and_say)
- (name main))
+ (name main)
+ (ocamlopt_flags (:standard -inline 20)))

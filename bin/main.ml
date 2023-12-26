@@ -16,8 +16,8 @@ module Consumer = struct
     mutable rest : Buffer.t Seq.t
   }
 
-  let create ss =
-    match ss () with
+  let create seq =
+    match seq () with
     | Seq.Nil -> {
         block = Buffer.create 0;
         index = 0;
@@ -46,42 +46,71 @@ end
                 
 let maxblocksize = 1024 * 16
 
+module Producer = struct
+  type t = {
+      mutable buffer: Buffer.t
+    }
 
-let append_int buffer n =
-  if n < 10 then
-    Buffer.add_char buffer (Char.chr (Char.code '0' + n))
-  else
-    (* unused unless you use digits >= 4 in seed *)
-    Printf.bprintf buffer "%d" n
+  let create () = {
+      buffer = Buffer.create maxblocksize
+    }
+
+  let add_pair producer c n =
+    let add_int producer n =
+      if n < 10 then
+        Buffer.add_char producer.buffer (Char.chr (Char.code '0' + n))
+      else
+        (* unused unless you use digits >= 4 in seed *)
+        Printf.bprintf producer.buffer "%d" n in
+
+    let add_char producer c =
+      Buffer.add_char producer.buffer c in
+    
+    add_int producer n;
+    add_char producer c
+
+  let push producer cont =
+    if Buffer.length producer.buffer <= maxblocksize - 4 then
+      cont ()
+    else
+      let full_buffer = producer.buffer in
+      producer.buffer <- Buffer.create maxblocksize;
+      (* need to use fun () -> Seq.Cons here instead of Seq.cons to delay computation. Meh *)
+      fun () -> Seq.Cons (full_buffer, cont ())
+    
+  let flush producer =
+    Seq.return producer.buffer
+
+  let empty =
+    Seq.empty
+    
+  let of_string s =
+    StringSequence.of_string s
+end
+                
                  
-let rec look_and_say n =
+let rec look_and_say n : StringSequence.t =
   if n = 1 then
-    let buffer1 = Buffer.create 1 in
-    Buffer.add_char buffer1 '1';
-    Seq.return buffer1
+    Producer.of_string "1"
   else
     let prev = look_and_say (n - 1) in
     let consumer = Consumer.create prev in
     match Consumer.get consumer with
-    | None -> Seq.empty
+    | None -> Producer.empty
     | Some c ->
-       let rec aux current count out_buffer =
+       let producer = Producer.create () in
+       let rec aux current count =
          match Consumer.get consumer with
          | Some c when c = current ->
-            aux current (count + 1) out_buffer
+            aux current (count + 1)
          | Some c ->
-            append_int out_buffer count;
-            Buffer.add_char out_buffer current;
-            if Buffer.length out_buffer <= maxblocksize - 4 then
-              aux c 1 out_buffer
-            else
-              (* need to use fun () -> Seq.Cons here instead of Seq.cons to delay computation. Meh *)
-              fun () -> Seq.Cons (out_buffer, aux c 1 (Buffer.create maxblocksize))
+            Producer.add_pair producer current count;
+            Producer.push producer
+              (fun () -> aux c 1)
          | None ->
-            append_int out_buffer count;
-            Buffer.add_char out_buffer current;
-            Seq.return out_buffer in
-       aux c 1 (Buffer.create maxblocksize)
+            Producer.add_pair producer current count;
+            Producer.flush producer in
+       aux c 1
        
 let () =
   let n = int_of_string Sys.argv.(1) in
