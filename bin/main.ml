@@ -7,13 +7,16 @@ module StringSequence = struct
     let buffer = Buffer.create (String.length s) in
     Buffer.add_string buffer s;
     Seq.return buffer
+
+  let output s channel =
+    Seq.iter (Buffer.output_buffer channel) s
 end
 
 module Consumer = struct
   type t = {
     mutable block : Buffer.t;
     mutable index : int;
-    mutable rest : Buffer.t Seq.t
+    mutable rest : StringSequence.t
   }
 
   let create seq =
@@ -89,7 +92,7 @@ module Producer = struct
 end
                 
                  
-let rec look_and_say n : StringSequence.t =
+let rec look_and_say n =
   if n = 1 then
     Producer.of_string "1"
   else
@@ -114,6 +117,6 @@ let rec look_and_say n : StringSequence.t =
        
 let () =
   let n = int_of_string Sys.argv.(1) in
-  Seq.iter (Buffer.output_buffer stdout) (look_and_say n);
-  Printf.printf "%!"
+  StringSequence.output (look_and_say n) stdout;
+  print_newline ()
     
